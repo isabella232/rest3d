@@ -134,37 +134,29 @@ var o3dgc = (function () {
     module.SC3DMCTriplet.prototype.Equal = function (rhs) {
         return (this.m_c === rhs.m_c && this.m_b === rhs.m_b && this.m_a === rhs.m_a);
     };
-    // SC3DMCPredictor class
-    module.SC3DMCPredictor = function () {
-        this.m_id = new module.SC3DMCTriplet(-1, -1, -1);
-        this.m_pred = new Float32Array(local.O3DGC_SC3DMC_MAX_DIM_ATTRIBUTES);
-    };
     // fix me: optimize this function (e.g., binary search)
-    function InsertPredictor(e, nPred, list, dimFloatArray) {
-        var pos, foundOrInserted, j, j1, j0, h, i;
+    function InsertPredictor(e, nPred, list) {
+        var pos, foundOrInserted, j, j1, j0, h;
         pos = -1;
         foundOrInserted = false;
         j1 = nPred.m_value;
         j0 = 0;
         for (j = j0; j < j1; ++j) {
-            if (e.Equal(list[j].m_id)) {
+            if (e.Equal(list[j])) {
                 foundOrInserted = true;
                 break;
-            } else if (e.Less(list[j].m_id)) {
+            } else if (e.Less(list[j])) {
                 if (nPred.m_value < local.O3DGC_SC3DMC_MAX_PREDICTION_NEIGHBORS) {
                     ++nPred.m_value;
                 }
                 for (h = nPred.m_value - 1; h > j; --h) {
-                    list[h].m_id.m_a = list[h - 1].m_id.m_a;
-                    list[h].m_id.m_b = list[h - 1].m_id.m_b;
-                    list[h].m_id.m_c = list[h - 1].m_id.m_c;
-                    for (i = 0; i < dimFloatArray; ++i) {
-                        list[h].m_pred[i] = list[h - 1].m_pred[i];
-                    }
+                    list[h].m_a = list[h - 1].m_a;
+                    list[h].m_b = list[h - 1].m_b;
+                    list[h].m_c = list[h - 1].m_c;
                 }
-                list[j].m_id.m_a = e.m_a;
-                list[j].m_id.m_b = e.m_b;
-                list[j].m_id.m_c = e.m_c;
+                list[j].m_a = e.m_a;
+                list[j].m_b = e.m_b;
+                list[j].m_c = e.m_c;
                 pos = j;
                 foundOrInserted = true;
                 break;
@@ -172,9 +164,9 @@ var o3dgc = (function () {
         }
         if (!foundOrInserted && nPred.m_value < local.O3DGC_SC3DMC_MAX_PREDICTION_NEIGHBORS) {
             pos = nPred.m_value++;
-            list[pos].m_id.m_a = e.m_a;
-            list[pos].m_id.m_b = e.m_b;
-            list[pos].m_id.m_c = e.m_c;
+            list[pos].m_a = e.m_a;
+            list[pos].m_b = e.m_b;
+            list[pos].m_c = e.m_c;
         }
         return pos;
     }
@@ -1903,8 +1895,8 @@ var o3dgc = (function () {
         this.m_maxNormal = new Float32Array(2);
         this.m_minNormal[0] = this.m_minNormal[1] = -2;
         this.m_maxNormal[0] = this.m_maxNormal[1] = 2;
-        for (i = 0; i < local.O3DGC_SC3DMC_MAX_DIM_ATTRIBUTES; ++i) {
-            this.m_neighbors[i] = new module.SC3DMCPredictor();
+        for (i = 0; i < local.O3DGC_SC3DMC_MAX_PREDICTION_NEIGHBORS; ++i) {
+            this.m_neighbors[i] = new module.SC3DMCTriplet();
         }
     };
     module.SC3DMCDecoder.prototype.GetStats = function () {
@@ -1982,8 +1974,8 @@ var o3dgc = (function () {
         }
         return module.O3DGC_OK;
     };
-    function DeltaPredictors(triangles, ta, v, nPred, neighbors, dimFloatArray, quantFloatArray, stride) {
-        var ws, k, p, w, i, id;
+    function DeltaPredictors(triangles, ta, v, nPred, neighbors) {
+        var k, w, id;
         id = new module.SC3DMCTriplet(-1, -1, -1);
         for (k = 0; k < 3; ++k) {
             w = triangles[ta * 3 + k];
@@ -1991,18 +1983,12 @@ var o3dgc = (function () {
                 id.m_a = -1;
                 id.m_b = -1;
                 id.m_c = w;
-                p = InsertPredictor(id, nPred, neighbors, dimFloatArray);
-                if (p !== -1) {
-                    ws = w * stride;
-                    for (i = 0; i < dimFloatArray; ++i) {
-                        neighbors[p].m_pred[i] = quantFloatArray[ws + i];
-                    }
-                }
+                InsertPredictor(id, nPred, neighbors);
             }
         }
     }
-    function ParallelogramPredictors(triangles, ta, v, nPred, neighbors, dimFloatArray, quantFloatArray, stride, v2T, v2TNeighbors) {
-        var ta3, tb3, as, bs, cs, a, b, c, x, i, k, u1_begin, u1_end, u1, tb, foundB, p, id;
+    function ParallelogramPredictors(triangles, ta, v, nPred, neighbors, v2T, v2TNeighbors) {
+        var ta3, tb3, a, b, c, x, k, u1_begin, u1_end, u1, tb, foundB, id;
         ta3 = ta * 3;
         id = new module.SC3DMCTriplet(-1, -1, -1);
         if (triangles[ta3] === v) {
@@ -2043,15 +2029,7 @@ var o3dgc = (function () {
                         id.m_b = a;
                     }
                     id.m_c = (-c - 1);
-                    p = InsertPredictor(id, nPred, neighbors, dimFloatArray);
-                    if (p !== -1) {
-                        as = a * stride;
-                        bs = b * stride;
-                        cs = c * stride;
-                        for (i = 0; i < dimFloatArray; ++i) {
-                            neighbors[p].m_pred[i] = quantFloatArray[as + i] + quantFloatArray[bs + i] - quantFloatArray[cs + i];
-                        }
-                    }
+                    InsertPredictor(id, nPred, neighbors);
                 }
             }
         }
@@ -2063,7 +2041,7 @@ var o3dgc = (function () {
                                                                     ifs,
                                                                     predMode,
                                                                     bstream) {
-        var testPredEnabled, bestPred, i, u, ta, u_begin, u_end, buffer, iterator, streamType, predResidual, acd, bModel0, bModel1, mModelPreds, v2T, v2TNeighbors, triangles, size, start, streamSize, mask, binarization, iteratorPred, exp_k, M, id, mModelValues, neighbors, normals, nPred, v;
+        var vs, cs, testPredEnabled, bestPred, i, u, ta, u_begin, u_end, buffer, iterator, streamType, predResidual, acd, bModel0, bModel1, mModelPreds, v2T, v2TNeighbors, triangles, size, start, streamSize, mask, binarization, iteratorPred, exp_k, M, id, mModelValues, neighbors, normals, nPred, v;
         iterator = this.m_iterator;
         streamType = this.m_streamType;
         acd = new module.ArithmeticDecoder();
@@ -2102,6 +2080,7 @@ var o3dgc = (function () {
         nPred = new module.NumberRef();
         testPredEnabled = predMode.m_value !== local.O3DGC_SC3DMC_NO_PREDICTION;
         for (v = 0; v < numIntArray; ++v) {
+            vs = v * stride;
             nPred.m_value = 0;
             if (v2T.GetNumNeighbors(v) > 0 && testPredEnabled) {
                 u_begin = v2T.Begin(v);
@@ -2111,24 +2090,27 @@ var o3dgc = (function () {
                     if (ta < 0) {
                         break;
                     }
-                    DeltaPredictors(triangles, ta, v, nPred, neighbors, dimIntArray, intArray, stride);
+                    DeltaPredictors(triangles, ta, v, nPred, neighbors);
                 }
             }
             if (nPred.m_value > 1) {
-                bestPred = acd.DecodeAdaptiveDataModel(mModelPreds);
+                bestPred = neighbors[acd.DecodeAdaptiveDataModel(mModelPreds)];
+                cs = bestPred.m_c * stride;
                 for (i = 0; i < dimIntArray; ++i) {
-                    predResidual = acd.DecodeIntACEGC(mModelValues, bModel0, bModel1, exp_k, M);
-                    intArray[v * stride + i] = predResidual + neighbors[bestPred].m_pred[i];
+                    for (i = 0; i < dimIntArray; ++i) {
+                        predResidual = acd.DecodeIntACEGC(mModelValues, bModel0, bModel1, exp_k, M);
+                        intArray[vs + i] = predResidual + intArray[cs + i];
+                    }
                 }
             } else if (v > 0 && predMode.m_value !== local.O3DGC_SC3DMC_NO_PREDICTION) {
                 for (i = 0; i < dimIntArray; ++i) {
                     predResidual = acd.DecodeIntACEGC(mModelValues, bModel0, bModel1, exp_k, M);
-                    intArray[v * stride + i] = predResidual + intArray[(v - 1) * stride + i];
+                    intArray[vs + i] = predResidual + intArray[(v - 1) * stride + i];
                 }
             } else {
                 for (i = 0; i < dimIntArray; ++i) {
                     predResidual = acd.DecodeUIntACEGC(mModelValues, bModel0, bModel1, exp_k, M);
-                    intArray[v * stride + i] = predResidual;
+                    intArray[vs + i] = predResidual;
                 }
             }
         }
@@ -2142,7 +2124,7 @@ var o3dgc = (function () {
                                                                    ifs,
                                                                    predMode,
                                                                    bstream) {
-        var testPredEnabled, iterator, streamType, predResidual, v2T, v2TNeighbors, triangles, size, start, streamSize, mask, binarization, iteratorPred, id, neighbors, normals, nPred, v, u_begin, u_end, u, ta, i, bestPred;
+        var vs, cs, testPredEnabled, iterator, streamType, predResidual, v2T, v2TNeighbors, triangles, size, start, streamSize, mask, binarization, iteratorPred, id, neighbors, normals, nPred, v, u_begin, u_end, u, ta, i, bestPred;
         iterator = this.m_iterator;
         streamType = this.m_streamType;
         v2T = this.m_triangleListDecoder.GetVertexToTriangle();
@@ -2168,6 +2150,7 @@ var o3dgc = (function () {
         testPredEnabled = predMode.m_value !== local.O3DGC_SC3DMC_NO_PREDICTION;
         for (v = 0; v < numIntArray; ++v) {
             nPred.m_value = 0;
+            vs = v * stride;
             if (v2T.GetNumNeighbors(v) > 0 && testPredEnabled) {
                 u_begin = v2T.Begin(v);
                 u_end = v2T.End(v);
@@ -2176,24 +2159,27 @@ var o3dgc = (function () {
                     if (ta < 0) {
                         break;
                     }
-                    DeltaPredictors(triangles, ta, v, nPred, neighbors, dimIntArray, intArray, stride);
+                    DeltaPredictors(triangles, ta, v, nPred, neighbors);
                 }
             }
             if (nPred.m_value > 1) {
-                bestPred = bstream.ReadUCharASCII(iteratorPred);
+                bestPred = neighbors[bstream.ReadUCharASCII(iteratorPred)];
+                cs = bestPred.m_c * stride;
                 for (i = 0; i < dimIntArray; ++i) {
-                    predResidual = bstream.ReadIntASCII(iterator);
-                    intArray[v * stride + i] = predResidual + neighbors[bestPred].m_pred[i];
+                    for (i = 0; i < dimIntArray; ++i) {
+                        predResidual = bstream.ReadIntASCII(iterator);
+                        intArray[vs + i] = predResidual + intArray[cs + i];
+                    }
                 }
             } else if (v > 0 && predMode.m_value !== local.O3DGC_SC3DMC_NO_PREDICTION) {
                 for (i = 0; i < dimIntArray; ++i) {
                     predResidual = bstream.ReadIntASCII(iterator);
-                    intArray[v * stride + i] = predResidual + intArray[(v - 1) * stride + i];
+                    intArray[vs + i] = predResidual + intArray[(v - 1) * stride + i];
                 }
             } else {
                 for (i = 0; i < dimIntArray; ++i) {
                     predResidual = bstream.ReadUIntASCII(iterator);
-                    intArray[v * stride + i] = predResidual;
+                    intArray[vs + i] = predResidual;
                 }
             }
         }
@@ -2325,7 +2311,7 @@ var o3dgc = (function () {
                                                                       ifs,
                                                                       predMode,
                                                                       bstream) {
-        var maxNPred, testPredEnabled, testParaPredEnabled, bestPred, dModel, buffer, quantFloatArray, neighbors, normals, nPred, ta, i, v, u, u_begin, u_end, iterator, orientation, streamType, predResidual, acd, bModel0, bModel1, mModelPreds, v2T, v2TNeighbors, triangles, size, start, streamSize, mask, binarization, iteratorPred, exp_k, M, mModelValues;
+        var vs, as, bs, cs, maxNPred, testPredEnabled, testParaPredEnabled, bestPred, dModel, buffer, quantFloatArray, neighbors, normals, nPred, ta, i, v, u, u_begin, u_end, iterator, orientation, streamType, predResidual, acd, bModel0, bModel1, mModelPreds, v2T, v2TNeighbors, triangles, size, start, streamSize, mask, binarization, iteratorPred, exp_k, M, mModelValues;
         iterator = this.m_iterator;
         orientation = this.m_orientation;
         streamType = this.m_streamType;
@@ -2386,6 +2372,7 @@ var o3dgc = (function () {
         testParaPredEnabled = predMode.m_value === local.O3DGC_SC3DMC_PARALLELOGRAM_PREDICTION;
         for (v = 0; v < numFloatArray; ++v) {
             nPred.m_value = 0;
+            vs = v * stride;
             if (v2T.GetNumNeighbors(v) > 0 && testPredEnabled) {
                 u_begin = v2T.Begin(v);
                 u_end = v2T.End(v);
@@ -2395,7 +2382,7 @@ var o3dgc = (function () {
                         if (ta < 0) {
                             break;
                         }
-                        ParallelogramPredictors(triangles, ta, v, nPred, neighbors, dimFloatArray, quantFloatArray, stride, v2T, v2TNeighbors);
+                        ParallelogramPredictors(triangles, ta, v, nPred, neighbors, v2T, v2TNeighbors);
                     }
                 }
                 if (nPred.m_value < maxNPred) {
@@ -2404,25 +2391,40 @@ var o3dgc = (function () {
                         if (ta < 0) {
                             break;
                         }
-                        DeltaPredictors(triangles, ta, v, nPred, neighbors, dimFloatArray, quantFloatArray, stride);
+                        DeltaPredictors(triangles, ta, v, nPred, neighbors);
                     }
                 }
             }
             if (nPred.m_value > 1) {
-                bestPred = acd.DecodeAdaptiveDataModel(mModelPreds);
-                for (i = 0; i < dimFloatArray; ++i) {
-                    predResidual = acd.DecodeIntACEGC(mModelValues, bModel0, bModel1, exp_k, M);
-                    quantFloatArray[v * stride + i] = predResidual + neighbors[bestPred].m_pred[i];
+                bestPred = neighbors[acd.DecodeAdaptiveDataModel(mModelPreds)];
+                cs = bestPred.m_c * stride;
+                if (cs < 0) {
+                    bs = bestPred.m_b * stride;
+                    as = bestPred.m_a * stride;
+                    cs = -cs - stride;
+                    for (i = 0; i < dimFloatArray; ++i) {
+                        for (i = 0; i < dimFloatArray; ++i) {
+                            predResidual = acd.DecodeIntACEGC(mModelValues, bModel0, bModel1, exp_k, M);
+                            quantFloatArray[vs + i] = predResidual + quantFloatArray[as + i] + quantFloatArray[bs + i] - quantFloatArray[cs + i];
+                        }
+                    }
+                } else {
+                    for (i = 0; i < dimFloatArray; ++i) {
+                        for (i = 0; i < dimFloatArray; ++i) {
+                            predResidual = acd.DecodeIntACEGC(mModelValues, bModel0, bModel1, exp_k, M);
+                            quantFloatArray[vs + i] = predResidual + quantFloatArray[cs + i];
+                        }
+                    }
                 }
             } else if (v > 0 && testPredEnabled) {
                 for (i = 0; i < dimFloatArray; ++i) {
                     predResidual = acd.DecodeIntACEGC(mModelValues, bModel0, bModel1, exp_k, M);
-                    quantFloatArray[v * stride + i] = predResidual + quantFloatArray[(v - 1) * stride + i];
+                    quantFloatArray[vs + i] = predResidual + quantFloatArray[(v - 1) * stride + i];
                 }
             } else {
                 for (i = 0; i < dimFloatArray; ++i) {
                     predResidual = acd.DecodeUIntACEGC(mModelValues, bModel0, bModel1, exp_k, M);
-                    quantFloatArray[v * stride + i] = predResidual;
+                    quantFloatArray[vs + i] = predResidual;
                 }
             }
         }
@@ -2440,7 +2442,7 @@ var o3dgc = (function () {
                                                                      ifs,
                                                                      predMode,
                                                                      bstream) {
-        var maxNPred, testPredEnabled, testParaPredEnabled, iterator, orientation, streamType, predResidual, v2T, v2TNeighbors, triangles, size, start, streamSize, mask, binarization, iteratorPred, quantFloatArray, neighbors, normals, nPred, v, u, u_begin, u_end, ta, i, bestPred;
+        var vs, as, bs, cs, maxNPred, testPredEnabled, testParaPredEnabled, iterator, orientation, streamType, predResidual, v2T, v2TNeighbors, triangles, size, start, streamSize, mask, binarization, iteratorPred, quantFloatArray, neighbors, normals, nPred, v, u, u_begin, u_end, ta, i, bestPred;
         maxNPred = local.O3DGC_SC3DMC_MAX_PREDICTION_NEIGHBORS;
         iterator = this.m_iterator;
         orientation = this.m_orientation;
@@ -2485,6 +2487,7 @@ var o3dgc = (function () {
         testParaPredEnabled = predMode.m_value === local.O3DGC_SC3DMC_PARALLELOGRAM_PREDICTION;
         for (v = 0; v < numFloatArray; ++v) {
             nPred.m_value = 0;
+            vs = v * stride;
             if (v2T.GetNumNeighbors(v) > 0 && testPredEnabled) {
                 u_begin = v2T.Begin(v);
                 u_end = v2T.End(v);
@@ -2494,7 +2497,7 @@ var o3dgc = (function () {
                         if (ta < 0) {
                             break;
                         }
-                        ParallelogramPredictors(triangles, ta, v, nPred, neighbors, dimFloatArray, quantFloatArray, stride, v2T, v2TNeighbors);
+                        ParallelogramPredictors(triangles, ta, v, nPred, neighbors, v2T, v2TNeighbors);
                     }
                 }
                 if (nPred.m_value < maxNPred) {
@@ -2503,25 +2506,40 @@ var o3dgc = (function () {
                         if (ta < 0) {
                             break;
                         }
-                        DeltaPredictors(triangles, ta, v, nPred, neighbors, dimFloatArray, quantFloatArray, stride);
+                        DeltaPredictors(triangles, ta, v, nPred, neighbors);
                     }
                 }
             }
             if (nPred.m_value > 1) {
-                bestPred = bstream.ReadUCharASCII(iteratorPred);
-                for (i = 0; i < dimFloatArray; ++i) {
-                    predResidual = bstream.ReadIntASCII(iterator);
-                    quantFloatArray[v * stride + i] = predResidual + neighbors[bestPred].m_pred[i];
+                bestPred = neighbors[bstream.ReadUCharASCII(iteratorPred)];
+                cs = bestPred.m_c * stride;
+                if (cs < 0) {
+                    bs = bestPred.m_b * stride;
+                    as = bestPred.m_a * stride;
+                    cs = -cs - stride;
+                    for (i = 0; i < dimFloatArray; ++i) {
+                        for (i = 0; i < dimFloatArray; ++i) {
+                            predResidual = bstream.ReadIntASCII(iterator);
+                            quantFloatArray[vs + i] = predResidual + quantFloatArray[as + i] + quantFloatArray[bs + i] - quantFloatArray[cs + i];
+                        }
+                    }
+                } else {
+                    for (i = 0; i < dimFloatArray; ++i) {
+                        for (i = 0; i < dimFloatArray; ++i) {
+                            predResidual = bstream.ReadIntASCII(iterator);
+                            quantFloatArray[vs + i] = predResidual + quantFloatArray[cs + i];
+                        }
+                    }
                 }
             } else if (v > 0 && predMode.m_value !== local.O3DGC_SC3DMC_NO_PREDICTION) {
                 for (i = 0; i < dimFloatArray; ++i) {
                     predResidual = bstream.ReadIntASCII(iterator);
-                    quantFloatArray[v * stride + i] = predResidual + quantFloatArray[(v - 1) * stride + i];
+                    quantFloatArray[vs + i] = predResidual + quantFloatArray[(v - 1) * stride + i];
                 }
             } else {
                 for (i = 0; i < dimFloatArray; ++i) {
                     predResidual = bstream.ReadUIntASCII(iterator);
-                    quantFloatArray[v * stride + i] = predResidual;
+                    quantFloatArray[vs + i] = predResidual;
                 }
             }
         }

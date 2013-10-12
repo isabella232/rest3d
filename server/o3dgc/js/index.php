@@ -66,18 +66,18 @@
         </script>
         <script type="text/javascript" src="o3dgc.js"></script>
         <script>
-		function print(txt){
-			var text2 = document.createElement('div');
-			text2.style.position = 'absolute';
-			text2.style.width = 100;
-			text2.style.height = 100;
-			text2.style.backgroundColor = 'transparent';
-			text2.innerHTML = txt;
-			text2.style.top =  100 + 'px';
-			text2.style.left =  0 + 'px';
-			text2.style.textAlign='left';
-			document.body.appendChild(text2);
-		}
+        function print(txt){
+            var text2 = document.createElement('div');
+            text2.style.position = 'absolute';
+            text2.style.width = 100;
+            text2.style.height = 100;
+            text2.style.backgroundColor = 'transparent';
+            text2.innerHTML = txt;
+            text2.style.top =  100 + 'px';
+            text2.style.left =  0 + 'px';
+            text2.style.textAlign='left';
+            document.body.appendChild(text2);
+        }
         function decodeDV(bstream, size){
             var decoder = new o3dgc.DynamicVectorDecoder();
             var dynamicVector = new o3dgc.DynamicVector();
@@ -110,8 +110,8 @@
             timer.Tic();
             decoder.DecodeHeader(ifs, bstream);
             timer.Toc();
-			var headerDecodeTime = timer.GetElapsedTime();
-			var headerSize = decoder.m_iterator.m_count;
+            var headerDecodeTime = timer.GetElapsedTime();
+            var headerSize = decoder.m_iterator.m_count;
             // allocate memory
             if (ifs.GetNCoordIndex() > 0) {
                 ifs.SetCoordIndex(new Uint16Array(3 * ifs.GetNCoordIndex()));
@@ -138,37 +138,37 @@
             timer.Tic();
             decoder.DecodePlayload(ifs, bstream);
             timer.Toc();
-			var stats = decoder.GetStats();			var log = '<pre>';
+            var stats = decoder.GetStats();            var log = '<pre>';
             log += "Mesh info \n";
-			log += "  # coords    " + ifs.GetNCoord() + "\n";
-			log += "  # normals   " + ifs.GetNNormal() + "\n";
+            log += "  # coords    " + ifs.GetNCoord() + "\n";
+            log += "  # normals   " + ifs.GetNNormal() + "\n";
             for (var a = 0; a < numNumFloatAttributes; ++a){
-				log += "  # FloatAttribute[" + a + "] " + ifs.GetNFloatAttribute(a) + "(" + ifs.GetFloatAttributeType(a)+")\n";
+                log += "  # FloatAttribute[" + a + "] " + ifs.GetNFloatAttribute(a) + "(" + ifs.GetFloatAttributeType(a)+")\n";
             }
             for (var a = 0; a < numNumIntAttributes; ++a){
-				log += "  # IntAttribute[" + a + "] " + ifs.GetNIntAttribute(a) + "(" + ifs.GetIntAttributeType(a)+")" + "\n";
+                log += "  # IntAttribute[" + a + "] " + ifs.GetNIntAttribute(a) + "(" + ifs.GetIntAttributeType(a)+")" + "\n";
             }
-			log += "  # triangles " + ifs.GetNCoordIndex() + "\n\n";
+            log += "  # triangles " + ifs.GetNCoordIndex() + "\n\n";
 
-			log += "DecodeHeader\n";
-			log += "  time       " + (headerDecodeTime).toFixed(0) + " ms\n";
-			log += "  size       " + (headerSize/1024).toFixed(1) + " KB (" + (8.0 * headerSize / ifs.GetNCoord()).toFixed(1) + " bpv)" + "\n\n";
-			log += "DecodePlayload\n";
-			log += "  time       " + (timer.GetElapsedTime()).toFixed(0) + " ms\n";
-			log += "  size       " + (size/1024).toFixed(1) + " KB (" + (8.0 * size / ifs.GetNCoord()).toFixed(1) + " bpv)" + "\n\n";
-			log += "Details\n";
-			log += "  CoordIndex " + (stats.m_timeCoordIndex).toFixed(0) + " ms, " + Math.round(stats.m_streamSizeCoordIndex/1024) + " KB (" + (8.0 * stats.m_streamSizeCoordIndex / ifs.GetNCoord()).toFixed(1) + " bpv)\n";
-			log += "  Coord      " + (stats.m_timeCoord).toFixed(0) + " ms, " + Math.round(stats.m_streamSizeCoord/1024) + " KB (" + (8.0 * stats.m_streamSizeCoord / ifs.GetNCoord()).toFixed(1) + " bpv)\n";
-			log += "  Normal     " + (stats.m_timeNormal).toFixed(0) + " ms, " + Math.round(stats.m_streamSizeNormal/1024) + " KB (" + (8.0 * stats.m_streamSizeNormal / ifs.GetNCoord()).toFixed(1) + " bpv)\n";
+            log += "DecodeHeader\n";
+            log += "  time       " + (headerDecodeTime).toFixed(0) + " ms\n";
+            log += "  size       " + (headerSize/1024).toFixed(1) + " KB (" + (8.0 * headerSize / ifs.GetNCoord()).toFixed(1) + " bpv)" + "\n\n";
+            log += "DecodePlayload\n";
+            log += "  time       " + (timer.GetElapsedTime()).toFixed(0) + " ms\n";
+            log += "  size       " + (size/1024).toFixed(1) + " KB (" + (8.0 * size / ifs.GetNCoord()).toFixed(1) + " bpv)" + "\n\n";
+            log += "Details\n";
+            log += "  CoordIndex " + (stats.m_timeCoordIndex).toFixed(0) + " ms, " + Math.round(stats.m_streamSizeCoordIndex/1024) + " KB (" + (8.0 * stats.m_streamSizeCoordIndex / ifs.GetNCoord()).toFixed(1) + " bpv)\n";
+            log += "  Coord      " + (stats.m_timeCoord).toFixed(0) + " ms, " + Math.round(stats.m_streamSizeCoord/1024) + " KB (" + (8.0 * stats.m_streamSizeCoord / ifs.GetNCoord()).toFixed(1) + " bpv)\n";
+            log += "  Normal     " + (stats.m_timeNormal).toFixed(0) + " ms, " + Math.round(stats.m_streamSizeNormal/1024) + " KB (" + (8.0 * stats.m_streamSizeNormal / ifs.GetNCoord()).toFixed(1) + " bpv)\n";
             for (var a = 0; a < numNumFloatAttributes; ++a){
-				log += "  Float Attributes   " + (stats.m_timeFloatAttribute[a]).toFixed(0) + " ms, " + Math.round(stats.m_streamSizeFloatAttribute[a]/1024) + " KB (" + (8.0 * stats.m_streamSizeFloatAttribute[a] / ifs.GetNCoord()).toFixed(1) + " bpv)\n";
+                log += "  Float Attributes   " + (stats.m_timeFloatAttribute[a]).toFixed(0) + " ms, " + Math.round(stats.m_streamSizeFloatAttribute[a]/1024) + " KB (" + (8.0 * stats.m_streamSizeFloatAttribute[a] / ifs.GetNCoord()).toFixed(1) + " bpv)\n";
             }
             for (var a = 0; a < numNumIntAttributes; ++a){
-				log += "  Int Attributes   " + (stats.m_timeIntAttribute[a]).toFixed(0) + " ms, " + Math.round(stats.m_streamSizeIntAttribute[a]/1024) + " KB (" + (8.0 * stats.m_streamSizeIntAttribute[a] / ifs.GetNCoord()).toFixed(1) + " bpv)\n";
+                log += "  Int Attributes   " + (stats.m_timeIntAttribute[a]).toFixed(0) + " ms, " + Math.round(stats.m_streamSizeIntAttribute[a]/1024) + " KB (" + (8.0 * stats.m_streamSizeIntAttribute[a] / ifs.GetNCoord()).toFixed(1) + " bpv)\n";
             }
-			log += "  Reorder    " + (stats.m_timeReorder).toFixed(1) + " ms,  " + 0 + " KB (" + 0.0 + " bpv)\n";
-			log += '</pre>';
-			print(log);
+            log += "  Reorder    " + (stats.m_timeReorder).toFixed(1) + " ms,  " + 0 + " KB (" + 0.0 + " bpv)\n";
+            log += '</pre>';
+            print(log);
             if (dump){
                 SaveOBJ(ifs, fileName);
             }
