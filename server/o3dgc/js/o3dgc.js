@@ -932,16 +932,22 @@ var o3dgc = (function () {
         this.m_nCoordIndex = nCoordIndex;
     };
     module.IndexedFaceSet.prototype.SetNNormalIndex = function (nNormalIndex) {
+        // not supported
     };
     module.IndexedFaceSet.prototype.SetNormalPerVertex = function (perVertex) {
+        // not supported
     };
     module.IndexedFaceSet.prototype.SetNFloatAttributeIndex = function (nFloatAttributeIndex) {
+        // not supported
     };
     module.IndexedFaceSet.prototype.SetNIntAttributeIndex = function (nIntAttributeIndex) {
+        // not supported
     };
     module.IndexedFaceSet.prototype.SetFloatAttributePerVertex = function (perVertex) {
+        // not supported
     };
     module.IndexedFaceSet.prototype.SetIntAttributePerVertex = function (perVertex) {
+        // not supported
     };
     module.IndexedFaceSet.prototype.SetNCoord = function (nCoord) {
         this.m_nCoord = nCoord;

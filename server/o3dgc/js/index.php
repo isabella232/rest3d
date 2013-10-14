@@ -64,7 +64,7 @@
         };
         oReq.send(null);
         </script>
-        <script type="text/javascript" src="o3dgc.js"></script>
+        <script type="text/javascript" src="o3dgc.min.js"></script>
         <script>
         function print(txt){
             var text2 = document.createElement('div');
@@ -138,7 +138,8 @@
             timer.Tic();
             decoder.DecodePlayload(ifs, bstream);
             timer.Toc();
-            var stats = decoder.GetStats();            var log = '<pre>';
+            var stats = decoder.GetStats();
+            var log = '<pre>';
             log += "Mesh info \n";
             log += "  # coords    " + ifs.GetNCoord() + "\n";
             log += "  # normals   " + ifs.GetNNormal() + "\n";
