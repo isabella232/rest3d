@@ -786,8 +786,8 @@ int testObj2COLLADA(int argc, char * argv[])
 }
 int main(int argc, char * argv[])
 {
-	testObj2COLLADA(argc, argv);
-	return 0;
+//	testObj2COLLADA(argc, argv);
+//	return 0;
 #ifdef TEST_DYNAMIC_VECTOR_ENCODING
     return testDynamicVectorCompression();
 #else
