@@ -1042,13 +1042,13 @@ var o3dgc = (function () {
         this.m_streamTypeMode = local.O3DGC_STREAM_TYPE_ASCII;
         this.m_coordQuantBits = 14;
         this.m_normalQuantBits = 8;
-        this.m_coordPredMode = local.O3DGC_SC3DMC_ENHANCED_DIFFERENTIAL_PREDICTION;
+        this.m_coordPredMode = local.O3DGC_SC3DMC_ENHANCED_PARALLELOGRAM_PREDICTION;
         this.m_normalPredMode = local.O3DGC_SC3DMC_SURF_NORMALS_PREDICTION;
         for (a = 0; a < local.O3DGC_SC3DMC_MAX_NUM_FLOAT_ATTRIBUTES; ++a) {
-            this.m_floatAttributePredMode[a] = local.O3DGC_SC3DMC_ENHANCED_DIFFERENTIAL_PREDICTION;
+            this.m_floatAttributePredMode[a] = local.O3DGC_SC3DMC_ENHANCED_PARALLELOGRAM_PREDICTION;
         }
         for (a = 0; a < local.O3DGC_SC3DMC_MAX_NUM_INT_ATTRIBUTES; ++a) {
-            this.m_intAttributePredMode[a] = local.O3DGC_SC3DMC_ENHANCED_DIFFERENTIAL_PREDICTION;
+            this.m_intAttributePredMode[a] = local.O3DGC_SC3DMC_ENHANCED_PARALLELOGRAM_PREDICTION;
         }
     };
     module.SC3DMCEncodeParams.prototype.GetStreamType = function () {
@@ -2377,7 +2377,7 @@ var o3dgc = (function () {
         normals = this.m_normals;
         nPred = new module.NumberRef();
         testPredEnabled = predMode.m_value !== local.O3DGC_SC3DMC_NO_PREDICTION;
-        testParaPredEnabled = predMode.m_value === local.O3DGC_SC3DMC_ENHANCED_DIFFERENTIAL_PREDICTION;
+        testParaPredEnabled = predMode.m_value === local.O3DGC_SC3DMC_ENHANCED_PARALLELOGRAM_PREDICTION;
         for (v = 0; v < numFloatArray; ++v) {
             nPred.m_value = 0;
             vs = v * stride;
@@ -2492,7 +2492,7 @@ var o3dgc = (function () {
         normals = this.m_normals;
         nPred = new module.NumberRef();
         testPredEnabled = predMode.m_value !== local.O3DGC_SC3DMC_NO_PREDICTION;
-        testParaPredEnabled = predMode.m_value === local.O3DGC_SC3DMC_ENHANCED_DIFFERENTIAL_PREDICTION;
+        testParaPredEnabled = predMode.m_value === local.O3DGC_SC3DMC_ENHANCED_PARALLELOGRAM_PREDICTION;
         for (v = 0; v < numFloatArray; ++v) {
             nPred.m_value = 0;
             vs = v * stride;

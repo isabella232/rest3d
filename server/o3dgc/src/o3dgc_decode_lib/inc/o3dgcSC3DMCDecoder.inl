@@ -254,8 +254,8 @@ namespace o3dgc
         unsigned long       start            = m_iterator;
         unsigned long       streamSize       = bstream.ReadUInt32(m_iterator, m_streamType);        // bitsream size
         unsigned char mask                   = bstream.ReadUChar(m_iterator, m_streamType);
-        O3DGCSC3DMCBinarization binarization = (O3DGCSC3DMCBinarization)((mask >> 4) & 7);
-        predMode                             = (O3DGCSC3DMCPredictionMode)(mask & 7);
+        O3DGCSC3DMCBinarization binarization = (O3DGCSC3DMCBinarization)((mask >> 4) & 15);
+        predMode                             = (O3DGCSC3DMCPredictionMode)(mask & 15);
         streamSize                          -= (m_iterator - start);
         unsigned long       iteratorPred     = m_iterator + streamSize;
         unsigned int        exp_k            = 0;
@@ -516,8 +516,8 @@ namespace o3dgc
         unsigned long       start            = m_iterator;
         unsigned long       streamSize       = bstream.ReadUInt32(m_iterator, m_streamType);        // bitsream size
         unsigned char mask                   = bstream.ReadUChar(m_iterator, m_streamType);
-        O3DGCSC3DMCBinarization binarization = (O3DGCSC3DMCBinarization)((mask >> 4) & 7);
-        predMode                             = (O3DGCSC3DMCPredictionMode)(mask & 7);
+        O3DGCSC3DMCBinarization binarization = (O3DGCSC3DMCBinarization)((mask >> 4) & 15);
+        predMode                             = (O3DGCSC3DMCPredictionMode)(mask & 15);
         streamSize                          -= (m_iterator - start);
         unsigned long       iteratorPred     = m_iterator + streamSize;
         unsigned int        exp_k            = 0;
