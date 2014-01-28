@@ -40,11 +40,11 @@ namespace o3dgc
                                         m_streamTypeMode    = O3DGC_STREAM_TYPE_ASCII;
                                         m_coordQuantBits    = 14;
                                         m_normalQuantBits   = 8;
-                                        m_coordPredMode     = O3DGC_SC3DMC_PARALLELOGRAM_PREDICTION;
+                                        m_coordPredMode     = O3DGC_SC3DMC_ENHANCED_PARALLELOGRAM_PREDICTION;
                                         m_normalPredMode    = O3DGC_SC3DMC_SURF_NORMALS_PREDICTION;
                                         for(unsigned long a = 0; a < O3DGC_SC3DMC_MAX_NUM_FLOAT_ATTRIBUTES; ++a)
                                         {
-                                            m_floatAttributePredMode[a] = O3DGC_SC3DMC_DIFFERENTIAL_PREDICTION;
+                                            m_floatAttributePredMode[a] = O3DGC_SC3DMC_ENHANCED_DIFFERENTIAL_PREDICTION;
                                         }
                                         for(unsigned long a = 0; a < O3DGC_SC3DMC_MAX_NUM_INT_ATTRIBUTES; ++a)
                                         {

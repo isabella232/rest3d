@@ -123,6 +123,7 @@ bool SaveMaterials(const std::string & fileName,
 bool SaveIFS(const std::string & fileName, 
              const IndexedFaceSet<unsigned long> & ifs);
 bool Check(const IndexedFaceSet<unsigned long> & ifs);
+bool SaveCOLLADA(const std::string & fileName, const IndexedFaceSet<unsigned long> & ifs);
 
 int testEncode(const std::string & fileName, int qcoord, int qtexCoord, int qnormal, O3DGCStreamType streamType)
 {
@@ -227,7 +228,7 @@ int testEncode(const std::string & fileName, int qcoord, int qtexCoord, int qnor
     }
 
     params.SetCoordQuantBits(qcoord);
-    params.SetCoordPredMode(O3DGC_SC3DMC_PARALLELOGRAM_PREDICTION);
+    params.SetCoordPredMode(O3DGC_SC3DMC_ENHANCED_PARALLELOGRAM_PREDICTION);
     ifs.SetNCoord((unsigned long) points.size());
     ifs.SetCoord((Real * const) & (points[0]));
 
@@ -244,7 +245,7 @@ int testEncode(const std::string & fileName, int qcoord, int qtexCoord, int qnor
     if (texCoords.size() > 0)
     {
         params.SetFloatAttributeQuantBits(nFloatAttributes, qtexCoord);
-        params.SetFloatAttributePredMode(nFloatAttributes, O3DGC_SC3DMC_PARALLELOGRAM_PREDICTION);
+        params.SetFloatAttributePredMode(nFloatAttributes, O3DGC_SC3DMC_ENHANCED_PARALLELOGRAM_PREDICTION);
         ifs.SetNFloatAttribute(nFloatAttributes, texCoords.size());
         ifs.SetFloatAttributeDim(nFloatAttributes, 2);
         ifs.SetFloatAttributeType(nFloatAttributes, O3DGC_IFS_FLOAT_ATTRIBUTE_TYPE_TEXCOORD);
@@ -256,7 +257,7 @@ int testEncode(const std::string & fileName, int qcoord, int qtexCoord, int qnor
     if (weights.size() > 0)
     {
         params.SetFloatAttributeQuantBits(nFloatAttributes, qWeights);
-        params.SetFloatAttributePredMode(nFloatAttributes, O3DGC_SC3DMC_DIFFERENTIAL_PREDICTION);
+        params.SetFloatAttributePredMode(nFloatAttributes, O3DGC_SC3DMC_ENHANCED_DIFFERENTIAL_PREDICTION);
         ifs.SetNFloatAttribute(nFloatAttributes, weights.size() / numJointsPerVertex);
         ifs.SetFloatAttributeDim(nFloatAttributes, numJointsPerVertex);
         ifs.SetFloatAttributeType(nFloatAttributes, O3DGC_IFS_FLOAT_ATTRIBUTE_TYPE_WEIGHT);
@@ -266,7 +267,7 @@ int testEncode(const std::string & fileName, int qcoord, int qtexCoord, int qnor
 
     if (jointIDs.size() > 0)
     {
-        params.SetIntAttributePredMode(nIntAttributes, O3DGC_SC3DMC_DIFFERENTIAL_PREDICTION);
+        params.SetIntAttributePredMode(nIntAttributes, O3DGC_SC3DMC_ENHANCED_DIFFERENTIAL_PREDICTION);
         ifs.SetNIntAttribute(nIntAttributes, jointIDs.size() / numJointsPerVertex);
         ifs.SetIntAttributeDim(nIntAttributes, numJointsPerVertex);
         ifs.SetIntAttributeType(nIntAttributes, O3DGC_IFS_INT_ATTRIBUTE_TYPE_JOINT_ID);
@@ -529,7 +530,7 @@ int testDynamicVectorCompression()
     dynamicVector0.SetMin(min);
     dynamicVector0.SetNVector(N);
     dynamicVector0.SetStride(3);
-    dynamicVector0.ComputeMinMax(O3DGC_SC3DMC_MAX_ALL_DIMS);
+    dynamicVector0.ComputeMinMax(O3DGC_SC3DMC_MAX_SEP_DIM);//O3DGC_SC3DMC_MAX_ALL_DIMS
 
     DVEncodeParams params;
     params.SetQuantBits(10);
@@ -679,8 +680,114 @@ int testIFSCompression(int argc, char * argv[])
     return 0;
 }
 
+int testObj2COLLADA(int argc, char * argv[])
+{
+    std::string inputFileName;
+    for(int i = 1; i < argc; ++i)
+    {
+        if ( !strcmp(argv[i], "-i"))
+        {
+            ++i;
+            if (i < argc)
+            {
+                inputFileName = argv[i];
+            }
+        }
+    }
+
+    std::string folder;
+    long found = (long) inputFileName.find_last_of(PATH_SEP);
+    if (found != -1)
+    {
+        folder = inputFileName.substr(0,found);
+    }
+    if (folder == "")
+    {
+        folder = ".";
+    }
+    std::string file(inputFileName.substr(found+1));
+    std::string outFileName = folder + PATH_SEP + file.substr(0, file.find_last_of(".")) + ".dae";
+
+    std::vector< Vec3<Real> > points;
+    std::vector< Vec3<Real> > normals;
+    std::vector< Vec2<Real> > texCoords;
+    std::vector< Vec3<unsigned long> > triangles;
+    std::vector< unsigned long > indexBufferIDs;
+    std::vector< Material > materials;
+
+    std::string materialLib;
+    std::cout << "Loading " << inputFileName << " ..." << std::endl;
+    bool ret;
+    if (inputFileName.find(".obj") != std::string::npos )
+    {
+        ret = LoadOBJ(inputFileName, points, texCoords, normals, triangles, indexBufferIDs, materials, materialLib);
+        if (!ret)
+        {
+            std::cout << "Error: LoadOBJ()\n" << std::endl;
+            return -1;
+        }
+    }
+    else
+    {
+        ret = LoadIFS(inputFileName, points, texCoords, normals, triangles, indexBufferIDs);
+        if (!ret)
+        {
+            std::cout << "Error: LoadIFS()\n" << std::endl;
+            return -1;
+        }
+    }
+    if (points.size() == 0 || triangles.size() == 0)
+    {
+        std::cout <<  "Error: points.size() == 0 || triangles.size() == 0 \n" << std::endl;
+        return -1;
+    }
+    std::cout << "Done." << std::endl;
+
+    if (materials.size() > 0)
+    {
+        std::string matFileName = folder + PATH_SEP + file.substr(0, file.find_last_of(".")) + ".mat";
+        ret = SaveMaterials(matFileName.c_str(), materials, materialLib);
+    }
+    if (!ret)
+    {
+        std::cout << "Error: SaveMatrials()\n" << std::endl;
+        return -1;
+    }
+
+    IndexedFaceSet<unsigned long> ifs;
+
+    ifs.SetNCoordIndex((unsigned long)triangles.size());
+    ifs.SetCoordIndex((unsigned long * const ) &(triangles[0]));
+    if (materials.size() > 1)
+    {
+        ifs.SetIndexBufferID((unsigned long * const ) &(indexBufferIDs[0]));
+    }
+
+    ifs.SetNCoord((unsigned long) points.size());
+    ifs.SetCoord((Real * const) & (points[0]));
+
+    ifs.SetNNormal((unsigned long)normals.size());
+    if (normals.size() > 0)
+    {
+        ifs.SetNormal((Real * const) & (normals[0]));
+    }
+
+    unsigned int nIntAttributes   = 0;
+    unsigned int nFloatAttributes = 0;
+    if (texCoords.size() > 0)
+    {
+        ifs.SetNFloatAttribute(nFloatAttributes, texCoords.size());
+        ifs.SetFloatAttributeDim(nFloatAttributes, 2);
+        ifs.SetFloatAttributeType(nFloatAttributes, O3DGC_IFS_FLOAT_ATTRIBUTE_TYPE_TEXCOORD);
+        ifs.SetFloatAttribute(nFloatAttributes, (Real * const ) & (texCoords[0]));
+        nFloatAttributes++;
+    }
+	return SaveCOLLADA(outFileName, ifs);
+}
 int main(int argc, char * argv[])
 {
+	testObj2COLLADA(argc, argv);
+	return 0;
 #ifdef TEST_DYNAMIC_VECTOR_ENCODING
     return testDynamicVectorCompression();
 #else
@@ -1241,3 +1348,134 @@ bool Check(const IndexedFaceSet<unsigned long> & ifs)
     }
     return true;
 }
+bool SaveCOLLADA(const std::string & fileName, const IndexedFaceSet<unsigned long> & ifs)
+{
+    std::ofstream fout;
+    fout.open(fileName.c_str());
+    if (!fout.fail()) 
+    {
+		fout << "<?xml version='1.0' encoding='utf-8'?> " << std::endl;
+		fout << "<COLLADA xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:xsd='http://www.w3.org/2001/XMLSchema' version='1.4.1' xmlns='http://www.collada.org/2005/11/COLLADASchema'> " << std::endl;
+		fout << "  <asset>																																										   " << std::endl;
+		fout << "    <contributor>																																								   " << std::endl;
+		fout << "      <author />																																								   " << std::endl;
+		fout << "      <authoring_tool> Converted by Obj2COLLADA</authoring_tool>																												   " << std::endl;
+		fout << "      <comments />																																								   " << std::endl;
+		fout << "      <copyright />																																							   " << std::endl;
+		fout << "      <source_data>" << fileName << " </source_data>																																	   " << std::endl;
+		fout << "    </contributor>																																								   " << std::endl;
+		fout << "    <unit meter='1' />																																							   " << std::endl;
+		fout << "    <up_axis>Y_UP</up_axis>																																					   " << std::endl;
+		fout << "  </asset>																																										   " << std::endl;
+		fout << "  <library_materials>																																							   " << std::endl;
+		fout << "    <material id='_000001' name='defaultMat'>																																	   " << std::endl;
+		fout << "      <instance_effect url='#_000001-fx' />																																	   " << std::endl;
+		fout << "    </material>																																								   " << std::endl;
+		fout << "  </library_materials>																																							   " << std::endl;
+		fout << "  <library_effects>																																							   " << std::endl;
+		fout << "    <effect id='_000001-fx' name='Diffuse'>																																	   " << std::endl;
+		fout << "      <profile_COMMON>																																							   " << std::endl;
+		fout << "        <newparam sid='_Color'>																																				   " << std::endl;
+		fout << "          <semantic>Main_x0020_Color</semantic>																																   " << std::endl;
+		fout << "          <float4>0.800000 0.800000 0.800000 1.000000</float4>																													   " << std::endl;
+		fout << "        </newparam>																																							   " << std::endl;
+		fout << "        <technique sid='common'>																																				   " << std::endl;
+		fout << "          <phong>																																								   " << std::endl;
+		fout << "            <diffuse>																																							   " << std::endl;
+		fout << "              <color>0.800000 0.800000 0.800000 1.000000</color>																												   " << std::endl;
+		fout << "            </diffuse>																																							   " << std::endl;
+		fout << "          </phong>																																								   " << std::endl;
+		fout << "        </technique>																																							   " << std::endl;
+		fout << "      </profile_COMMON>																																						   " << std::endl;
+		fout << "    </effect>																																									   " << std::endl;
+		fout << "  </library_effects>																																							   " << std::endl;
+		fout << "  <library_geometries>																																							   " << std::endl;
+		fout << "    <geometry id='_000002' name='default'>																																		   " << std::endl;
+		fout << "      <mesh>																																									   " << std::endl;
+		fout << "        <source id='_000002-positions'>																																		   " << std::endl;
+		const Real * const coords = ifs.GetCoord();
+		const unsigned long nCoords = 3 * ifs.GetNCoord();
+		fout << "          <float_array id='_000002-positions-array' count='" << nCoords << "'>" ;
+		for (unsigned long i = 0; i < nCoords; ++i) {
+			fout << coords[i] << " ";
+		}
+		fout << " </float_array>" << std::endl;
+
+		fout << "          <technique_common>																																					   " << std::endl;
+		fout << "            <accessor count='" << ifs.GetNCoord() << "' source='#_000002-positions-array' stride='3'>																								   " << std::endl;
+		fout << "              <param name='X' type='float' />																																	   " << std::endl;
+		fout << "              <param name='Y' type='float' />																																	   " << std::endl;
+		fout << "              <param name='Z' type='float' />																																	   " << std::endl;
+		fout << "            </accessor>																																						   " << std::endl;
+		fout << "          </technique_common>																																					   " << std::endl;
+		fout << "        </source>																																								   " << std::endl;
+
+		const Real * const normals = ifs.GetNormal();
+		const unsigned long nNormals = 3 * ifs.GetNNormal();
+
+		fout << "        <source id='_000002-normals'>																																			   " << std::endl;
+		fout << "          <float_array id='_000002-normals-array' count='" << nNormals << "'>";
+		for (unsigned long i = 0; i < nNormals; ++i) {
+			fout << normals[i] << " ";
+		}
+		fout << " </float_array>" << std::endl;
+
+		fout << "          <technique_common>																																					   " << std::endl;
+		fout << "            <accessor count='" << ifs.GetNNormal() << "' source='#_000002-normals-array' stride='3'>																								   " << std::endl;
+		fout << "              <param name='X' type='float' />																																	   " << std::endl;
+		fout << "              <param name='Y' type='float' />																																	   " << std::endl;
+		fout << "              <param name='Z' type='float' />																																	   " << std::endl;
+		fout << "            </accessor>																																						   " << std::endl;
+		fout << "          </technique_common>																																					   " << std::endl;
+		fout << "        </source>																																								   " << std::endl;
+		fout << "        <vertices id='_000002-vertices'>																																		   " << std::endl;
+		fout << "          <input semantic='POSITION' source='#_000002-positions' />																											   " << std::endl;
+		fout << "        </vertices>																																							   " << std::endl;
+		const unsigned long * const tris = ifs.GetCoordIndex();
+		const unsigned long nTri = 3 * ifs.GetNCoordIndex();
+		fout << "        <triangles count='" << ifs.GetNCoordIndex() << "' material='material-0'>																														   " << std::endl;
+		fout << "          <input offset='0' semantic='VERTEX' source='#_000002-vertices' />																									   " << std::endl;
+		fout << "          <input offset='0' semantic='NORMAL' source='#_000002-normals' />																										   " << std::endl;
+		fout << "          <p>";
+		for (unsigned long i = 0; i < nTri; ++i) {
+			fout << tris[i] << " ";
+		}
+		fout << "</p> " << std::endl;
+		fout << "        </triangles>																																							   " << std::endl;
+		fout << "      </mesh>																																									   " << std::endl;
+		fout << "    </geometry>																																								   " << std::endl;
+		fout << "  </library_geometries>																																						   " << std::endl;
+		fout << "  <library_visual_scenes>																																						   " << std::endl;
+		fout << "    <visual_scene id='collada_scene'>																																			   " << std::endl;
+		fout << "      <node id='_000003' name='model_name'>																																	   " << std::endl;
+		fout << "        <matrix sid='matrix'>																																					   " << std::endl;
+		fout << "1.000000 0.000000 0.000000 0.000000 																																			   " << std::endl;
+		fout << "0.000000 1.000000 0.000000 0.000000 																																			   " << std::endl;
+		fout << "0.000000 0.000000 1.000000 0.000000 																																			   " << std::endl;
+		fout << "0.000000 0.000000 0.000000 1.000000</matrix>																																	   " << std::endl;
+		fout << "        <node id='_000004' name='default'>																																		   " << std::endl;
+		fout << "          <instance_geometry url='#_000002'>																																	   " << std::endl;
+		fout << "            <bind_material>																																					   " << std::endl;
+		fout << "              <technique_common>																																				   " << std::endl;
+		fout << "                <instance_material symbol='material-0' target='#_000001' />																									   " << std::endl;
+		fout << "              </technique_common>																																				   " << std::endl;
+		fout << "            </bind_material>																																					   " << std::endl;
+		fout << "          </instance_geometry>																																					   " << std::endl;
+		fout << "        </node>																																								   " << std::endl;
+		fout << "      </node>																																									   " << std::endl;
+		fout << "    </visual_scene>																																							   " << std::endl;
+		fout << "  </library_visual_scenes>																																						   " << std::endl;
+		fout << "  <scene>																																										   " << std::endl;
+		fout << "    <instance_visual_scene url='#collada_scene' />																																   " << std::endl;
+		fout << "  </scene>																																										   " << std::endl;
+		fout << "</COLLADA>																																										   " << std::endl;
+        fout.close();
+    }
+    else 
+    {
+        std::cout << "Not able to create file" << std::endl;
+        return false;
+    }
+    return true;
+}
+

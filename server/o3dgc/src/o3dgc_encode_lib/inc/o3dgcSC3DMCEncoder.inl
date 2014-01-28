@@ -205,7 +205,7 @@ namespace o3dgc
         const T * const       triangles   = ifs.GetCoordIndex();
         const long            nvert       = (long) numFloatArray;
         unsigned long         start       = bstream.GetSize();
-        unsigned char         mask        = predMode & 7;
+        unsigned char         mask        = predMode & 15;
         const unsigned long   M           = O3DGC_SC3DMC_MAX_PREDICTION_SYMBOLS - 1;
         unsigned long         nSymbols    = O3DGC_SC3DMC_MAX_PREDICTION_SYMBOLS;
         unsigned long         nPredictors = O3DGC_SC3DMC_MAX_PREDICTION_NEIGHBORS;
@@ -218,13 +218,13 @@ namespace o3dgc
         memset(m_freqPreds  , 0, sizeof(unsigned long) * O3DGC_SC3DMC_MAX_PREDICTION_NEIGHBORS);
         if (m_streamType == O3DGC_STREAM_TYPE_ASCII)
         {
-            mask += (O3DGC_SC3DMC_BINARIZATION_ASCII & 7)<<4;
+            mask += (O3DGC_SC3DMC_BINARIZATION_ASCII & 15)<<4;
             m_predictors.Allocate(nvert);
             m_predictors.Clear();
         }
         else
         {
-            mask += (O3DGC_SC3DMC_BINARIZATION_AC_EGC & 7)<<4;
+            mask += (O3DGC_SC3DMC_BINARIZATION_AC_EGC & 15)<<4;
             const unsigned int NMAX = numFloatArray * dimFloatArray * 8 + 100;
             if ( m_sizeBufferAC < NMAX )
             {
@@ -284,7 +284,7 @@ namespace o3dgc
                 for (long u = u0; u < u1; u++) 
                 {
                     long ta = v2T.GetNeighbor(u);
-                    if ( predMode == O3DGC_SC3DMC_PARALLELOGRAM_PREDICTION )
+                    if ( predMode == O3DGC_SC3DMC_ENHANCED_PARALLELOGRAM_PREDICTION )
                     {
                         long a,b;
                         if ((long) triangles[ta*3] == v)
@@ -341,8 +341,8 @@ namespace o3dgc
                         }
                     }
                     if ( predMode == O3DGC_SC3DMC_SURF_NORMALS_PREDICTION  ||
-                         predMode == O3DGC_SC3DMC_PARALLELOGRAM_PREDICTION ||
-                         predMode == O3DGC_SC3DMC_DIFFERENTIAL_PREDICTION )
+                         predMode == O3DGC_SC3DMC_ENHANCED_PARALLELOGRAM_PREDICTION ||
+                         predMode == O3DGC_SC3DMC_ENHANCED_DIFFERENTIAL_PREDICTION )
                     {
                         for(long k = 0; k < 3; ++k)
                         {
@@ -530,7 +530,7 @@ namespace o3dgc
         const T * const       triangles   = ifs.GetCoordIndex();
         const long            nvert       = (long) numIntArray;
         unsigned long         start       = bstream.GetSize();
-        unsigned char         mask        = predMode & 7;
+        unsigned char         mask        = predMode & 15;
         const unsigned long   M           = O3DGC_SC3DMC_MAX_PREDICTION_SYMBOLS - 1;
         unsigned long         nSymbols    = O3DGC_SC3DMC_MAX_PREDICTION_SYMBOLS;
         unsigned long         nPredictors = O3DGC_SC3DMC_MAX_PREDICTION_NEIGHBORS;
@@ -543,13 +543,13 @@ namespace o3dgc
         memset(m_freqPreds  , 0, sizeof(unsigned long) * O3DGC_SC3DMC_MAX_PREDICTION_NEIGHBORS);
         if (m_streamType == O3DGC_STREAM_TYPE_ASCII)
         {
-            mask += (O3DGC_SC3DMC_BINARIZATION_ASCII & 7)<<4;
+            mask += (O3DGC_SC3DMC_BINARIZATION_ASCII & 15)<<4;
             m_predictors.Allocate(nvert);
             m_predictors.Clear();
         }
         else
         {
-            mask += (O3DGC_SC3DMC_BINARIZATION_AC_EGC & 7)<<4;
+            mask += (O3DGC_SC3DMC_BINARIZATION_AC_EGC & 15)<<4;
             const unsigned int NMAX = numIntArray * dimIntArray * 8 + 100;
             if ( m_sizeBufferAC < NMAX )
             {

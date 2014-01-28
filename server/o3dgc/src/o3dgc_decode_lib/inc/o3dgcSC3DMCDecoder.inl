@@ -594,7 +594,7 @@ namespace o3dgc
                     {
                         break;
                     }
-                    if (predMode == O3DGC_SC3DMC_PARALLELOGRAM_PREDICTION)
+                    if (predMode == O3DGC_SC3DMC_ENHANCED_PARALLELOGRAM_PREDICTION)
                     {
                         long a,b;
                         if ((long) triangles[ta*3] == v)
@@ -655,8 +655,8 @@ namespace o3dgc
                         }
                     }
                     if ( predMode == O3DGC_SC3DMC_SURF_NORMALS_PREDICTION  ||
-                         predMode == O3DGC_SC3DMC_PARALLELOGRAM_PREDICTION ||
-                         predMode == O3DGC_SC3DMC_DIFFERENTIAL_PREDICTION )
+                         predMode == O3DGC_SC3DMC_ENHANCED_PARALLELOGRAM_PREDICTION ||
+                         predMode == O3DGC_SC3DMC_ENHANCED_DIFFERENTIAL_PREDICTION )
                     {                
                         for(long k = 0; k < 3; ++k)
                         {

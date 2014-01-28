@@ -89,13 +89,15 @@ namespace o3dgc
     };
     enum O3DGCSC3DMCPredictionMode
     {
-        O3DGC_SC3DMC_NO_PREDICTION                    = 0, // supported
-        O3DGC_SC3DMC_DIFFERENTIAL_PREDICTION          = 1, // supported
-        O3DGC_SC3DMC_XOR_PREDICTION                   = 2, // not supported
-        O3DGC_SC3DMC_ADAPTIVE_DIFFERENTIAL_PREDICTION = 3, // not supported
-        O3DGC_SC3DMC_CIRCULAR_DIFFERENTIAL_PREDICTION = 4, // not supported
-        O3DGC_SC3DMC_PARALLELOGRAM_PREDICTION         = 5,  // supported
-        O3DGC_SC3DMC_SURF_NORMALS_PREDICTION          = 6   // supported
+        O3DGC_SC3DMC_NO_PREDICTION                     = 0, // supported
+        O3DGC_SC3DMC_DIFFERENTIAL_PREDICTION           = 1, // not supported
+        O3DGC_SC3DMC_XOR_PREDICTION                    = 2, // not supported
+        O3DGC_SC3DMC_ADAPTIVE_DIFFERENTIAL_PREDICTION  = 3, // not supported
+        O3DGC_SC3DMC_CIRCULAR_DIFFERENTIAL_PREDICTION  = 4, // not supported
+        O3DGC_SC3DMC_PARALLELOGRAM_PREDICTION          = 5, // not supported
+        O3DGC_SC3DMC_SURF_NORMALS_PREDICTION           = 6, // supported
+        O3DGC_SC3DMC_ENHANCED_DIFFERENTIAL_PREDICTION  = 7, // supported
+        O3DGC_SC3DMC_ENHANCED_PARALLELOGRAM_PREDICTION = 8, // supported
     };
     enum O3DGCSC3DMCEncodingMode
     {
